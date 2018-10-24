@@ -111,6 +111,82 @@ namespace mdl {
 
         return result;
     }
+    inline int yuv_to_rgb(int y, int u, int v, float *r, float *g, float *b) {
+  int r1 = (int)(y + 1.370705 * (v - 128));
+  int g1 = (int)(y - 0.698001 * (u - 128) - 0.703125 * (v - 128));
+  int b1 = (int)(y + 1.732446 * (u - 128));
+
+  r1 = (int)fminf(255, fmaxf(0, r1));
+  g1 = (int)fminf(255, fmaxf(0, g1));
+  b1 = (int)fminf(255, fmaxf(0, b1));
+  *r = r1;
+  *g = g1;
+  *b = b1;
+
+  return 0;
+}
+void convert_nv21_to_matrix(uint8_t *nv21, float *matrix, int width, int height,
+                            int targetWidth, int targetHeight, float *means) {
+  const uint8_t *yData = nv21;
+  const uint8_t *vuData = nv21 + width * height;
+
+  const int yRowStride = width;
+  const int vuRowStride = width;
+
+  float scale_x = width * 1.0 / targetWidth;
+  float scale_y = height * 1.0 / targetHeight;
+
+  for (int j = 0; j < targetHeight; ++j) {
+    int y = j * scale_y;
+    const uint8_t *pY = yData + y * yRowStride;
+    const uint8_t *pVU = vuData + (y >> 1) * vuRowStride;
+    for (int i = 0; i < targetWidth; ++i) {
+      int x = i * scale_x;
+      const int offset = ((x >> 1) << 1);
+      float r = 0;
+      float g = 0;
+      float b = 0;
+      yuv_to_rgb(pY[x], pVU[offset + 1], pVU[offset], &r, &g, &b);
+      int r_index = j * targetWidth + i;
+      int g_index = r_index + targetWidth * targetHeight;
+      int b_index = g_index + targetWidth * targetHeight;
+      matrix[r_index] = r - means[0];
+      matrix[g_index] = g - means[1];
+      matrix[b_index] = b - means[2];
+    }
+  }
+}
+
+    JNIEXPORT jfloatArray JNICALL Java_com_baidu_mdl_demo_MDL_predictYuv(
+        JNIEnv *env, jclass thiz, jbyteArray yuv_, jint imgWidth, jint imgHeight, jint targetWidth, jint targetHeight, jfloatArray meanValues) {
+        std::lock_guard<std::mutex> lock(shared_mutex);
+        LOGI("predictYuv incoked");
+        jfloatArray result = NULL;
+        EXCEPTION_HEADER
+        jbyte *yuv = env->GetByteArrayElements(yuv_, NULL);
+        float matrix[3 * targetHeight * targetWidth];
+        jfloat *meansPointer = nullptr;
+        if(meanValues != nullptr){
+            meansPointer = env->GetFloatArrayElements(meanValues, NULL);
+
+        }
+        convert_nv21_to_matrix((uint8_t *)yuv, matrix, imgwidth, imgHeight, targetWidth, targetHeight, meansPointer);
+        Loader *loader = Loader::shared_instance();
+        if (!loader->get_loaded()) {
+            throw_exception("loader is not loaded yet");}Net *net = get_net_instance(loader->_model);
+        float *dataPointer = nullptr;
+        if (nullptr != buf) {
+            dataPointer = env->GetFloatArrayElements(buf, NULL);}cpp_result = net->predict(dataPointer);
+
+        count = cpp_result.size();
+        result = env->NewFloatArray(count);
+        env->SetFloatArrayRegion(result, 0, count, &cpp_result[0]);
+
+
+        EXCEPTION_FOOTER
+
+
+    }
 
     JNIEXPORT void JNICALL Java_com_baidu_mdl_demo_MDL_clear(JNIEnv *env, jclass thiz) {
         std::lock_guard<std::mutex> lock(shared_mutex);
