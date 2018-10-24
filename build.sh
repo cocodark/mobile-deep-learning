@@ -66,13 +66,15 @@ build_mac_fn() {
     BUILD_DIR=build/release/"${PLATFORM}"
     mkdir -p ${BUILD_DIR}/build
     cp -r test/model ${BUILD_DIR}/build
-    cd "${BUILD_DIR}"
+#    cd "${BUILD_DIR}"
     CMAKE="cmake"
-    "${CMAKE}" ../../.. \
+    "${CMAKE}" . \
+        -B"build/release/${PLATFORM}" \
         -DCMAKE_BUILD_TYPE="${MODE}" \
         -DCMAKE_CXX_FLAGS="${CXX_FLAGS}" \
         -DIS_MAC=true
 
+    cd "./build/release/${PLATFORM}"
     make -j 8
 }
 

@@ -39,15 +39,13 @@ JNIEXPORT jboolean JNICALL Java_com_baidu_mdl_demo_MDL_load(
  * object detection for anroid
  */
 JNIEXPORT jfloatArray JNICALL Java_com_baidu_mdl_demo_MDL_predictImage(
-        JNIEnv *env, jclass thiz, jfloatArray buf) {
-
-}
+        JNIEnv *env, jclass thiz, jfloatArray buf);
 
 /**
  * object detection for anroid
  */
 JNIEXPORT jfloatArray JNICALL Java_com_baidu_mdl_demo_MDL_predictYuv(
-        JNIEnv *env, jclass thiz, jbyteArray yuv, int imgWidth, int imgHeight, int targetWidth, int targetHeight, float[] meanValues);
+        JNIEnv *env, jclass thiz, jbyteArray yuv, jint imgWidth, jint imgHeight, jint targetWidth, jint targetHeight, jfloatArray meanValues);
 
 /**
  * set thread num

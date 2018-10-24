@@ -4,6 +4,7 @@ include_directories(include /usr/local/include)
 
 
 set(CMAKE_VERBOSE_MAKEFILE on)
+set(CMAKE_MACOSX_RPATH 0)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY build)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY build)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY build)
@@ -30,7 +31,7 @@ include_directories(include/)
 include_directories(third-party/)
 
 # gen so
-ADD_LIBRARY(mdl SHARED ${MDL_CPP} ${MDL_H} fluid/test/test_helper.h)
+ADD_LIBRARY(mdl SHARED ${MDL_CPP} ${MDL_H})
 
 # gen static
 ADD_LIBRARY(mdl-static STATIC ${MDL_CPP} ${MDL_H})

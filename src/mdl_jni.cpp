@@ -162,6 +162,7 @@ void convert_nv21_to_matrix(uint8_t *nv21, float *matrix, int width, int height,
         std::lock_guard<std::mutex> lock(shared_mutex);
         LOGI("predictYuv incoked");
         jfloatArray result = NULL;
+        vector<float> cpp_result;
         EXCEPTION_HEADER
         jbyte *yuv = env->GetByteArrayElements(yuv_, NULL);
         float matrix[3 * targetHeight * targetWidth];
@@ -170,22 +171,20 @@ void convert_nv21_to_matrix(uint8_t *nv21, float *matrix, int width, int height,
             meansPointer = env->GetFloatArrayElements(meanValues, NULL);
 
         }
-        convert_nv21_to_matrix((uint8_t *)yuv, matrix, imgwidth, imgHeight, targetWidth, targetHeight, meansPointer);
+        convert_nv21_to_matrix((uint8_t *)yuv, matrix, imgWidth, imgHeight, targetWidth, targetHeight, meansPointer);
         Loader *loader = Loader::shared_instance();
         if (!loader->get_loaded()) {
-            throw_exception("loader is not loaded yet");}Net *net = get_net_instance(loader->_model);
-        float *dataPointer = nullptr;
-        if (nullptr != buf) {
-            dataPointer = env->GetFloatArrayElements(buf, NULL);}cpp_result = net->predict(dataPointer);
+            throw_exception("loader is not loaded yet");
+        }
+        Net *net = get_net_instance(loader->_model);
 
-        count = cpp_result.size();
+        cpp_result = net->predict(matrix);
+
+        int count = cpp_result.size();
         result = env->NewFloatArray(count);
         env->SetFloatArrayRegion(result, 0, count, &cpp_result[0]);
-
-
         EXCEPTION_FOOTER
-
-
+        return result;
     }
 
     JNIEXPORT void JNICALL Java_com_baidu_mdl_demo_MDL_clear(JNIEnv *env, jclass thiz) {
